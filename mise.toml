@@ -53,8 +53,53 @@ echo "Log out and back in to apply input sources (keyboard layouts)."
 
 [tasks.bootstrap]
 description = "Set up this Mac (grows with each roadmap step)"
-depends = ["install-brew", "git-init", "macos-settings"]
-run = "echo 'Bootstrap done.'"
+raw = true  # apps asks questions; keep the terminal attached
+# Steps run one by one, in this order. BOOTSTRAP_SKIP_APPS=1 skips apps (CI).
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+mise run install-brew
+mise run git-init
+mise run macos-settings
+if [[ "${BOOTSTRAP_SKIP_APPS:-}" == "1" ]]; then
+  echo "Skipping apps (BOOTSTRAP_SKIP_APPS=1)."
+else
+  mise run apps
+fi
+echo "Bootstrap done."
+'''
+
+# --- Applications -----------------------------------------------------------
+# Installed by `mise run apps` (see mise-tasks/apps).
+# Untagged entries are Core; `env` tags are the optional groups.
+# Apps without a cask (Alacritty, ytmemchat) come from GitHub releases.
+
+[bootstrap.brew]
+# Take over apps that were installed by hand when they match the cask.
+adopt = true
+# Register installed casks with Homebrew, so `brew upgrade` updates them.
+homebrew_metadata = true
+
+[bootstrap.packages]
+# Core
+"brew-cask:firefox" = "latest"
+"brew-cask:keepassxc" = "latest"
+"brew-cask:obsidian" = "latest"
+"brew-cask:vlc" = "latest"
+"brew-cask:telegram" = "latest"          # native Swift client (ru.keepcoder.Telegram)
+"brew-cask:discord" = "latest"
+"brew-cask:transmission" = "latest"
+"brew-cask:scroll-reverser" = "latest"   # needs Accessibility permission
+# Dev
+"brew-cask:godot" = { env = "dev" }
+"brew-cask:intellij-idea" = { env = "dev" }
+"brew-cask:meld" = { env = "dev" }
+# Media
+"brew-cask:gimp" = { env = "media" }
+"brew-cask:audacity" = { env = "media" }
+# Streaming
+"brew-cask:obs" = { env = "streaming" }
+"brew-cask:google-chrome" = { env = "streaming" }
 
 # --- macOS settings ---------------------------------------------------------
 # Applied by `mise run macos-settings`. Check with:

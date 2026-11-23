@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+#MISE description="Install apps: Core always, then Dev, Media, Streaming on request"
+#MISE raw=true
+# Usage:
+#   mise run apps                 # asks about each optional group
+#   mise run apps -- dev media    # no questions; installs Core + listed groups
+# Groups are the `env` tags of [bootstrap.packages] in mise.toml.
+set -euo pipefail
+
+all_groups=(dev media streaming)
+groups=()
+
+if [[ $# -gt 0 ]]; then
+  for g in "$@"; do
+    if [[ ! " ${all_groups[*]} " == *" $g "* ]]; then
+      echo "Unknown group: $g (known: ${all_groups[*]})" >&2
+      exit 1
+    fi
+    groups+=("$g")
+  done
+elif (: </dev/tty) 2>/dev/null; then
+  echo "Core apps are always installed. Optional groups:"
+  echo "  dev:       Godot, IntelliJ IDEA, Meld"
+  echo "  media:     GIMP, Audacity"
+  echo "  streaming: OBS, Google Chrome, ytmemchat"
+  for g in "${all_groups[@]}"; do
+    read -r -p "Install $g? [y/N] " answer </dev/tty || answer=""
+    [[ "$answer" =~ ^[Yy]$ ]] && groups+=("$g")
+  done
+fi
+
+envs="$(IFS=,; echo "${groups[*]-}")"
+echo "Installing Core${envs:+ + $envs}"
+
+# Casks from [bootstrap.packages]: untagged entries plus the chosen groups.
+if [[ -n "$envs" ]]; then
+  mise -E "$envs" bootstrap packages apply --yes
+else
+  mise bootstrap packages apply --yes
+fi
+
+# Apps that have no cask, from GitHub releases.
+mise run install-github-app -- alacritty/alacritty 'Alacritty-v.*\.dmg' Alacritty
+if [[ " ${groups[*]-} " == *" streaming "* ]]; then
+  mise run install-github-app -- HardDie/ytmemchat_wails 'ytmemchat-v.*-darwin-universal\.zip' ytmemchat
+fi

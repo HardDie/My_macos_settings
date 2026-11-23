@@ -25,6 +25,9 @@ Each step: discuss, approve, implement, review.
 16. `install_mise.sh` takes `REF` (branch or SHA), default `main`.
 17. `[env] _.path` adds `~/.local/bin` so tasks can call `mise`.
 18. Never run plain `mise bootstrap`; it runs our `bootstrap` task (loop).
+19. No App Store apps; Homebrew casks and GitHub releases only.
+20. App groups are `env` tags in `[bootstrap.packages]`.
+21. `bootstrap` runs its steps one by one, not as parallel `depends`.
 
 ## Steps
 
@@ -34,13 +37,14 @@ Each step: discuss, approve, implement, review.
 | 1 | Entry point: `install_mise.sh`, README, `bootstrap` task | Done |
 | 1b | CI on GitHub Actions for step 1 | Done |
 | 2 | macOS settings | Done |
-| 3 | Applications | Planned |
+| 3 | Applications | Done |
 | 4 | Runtimes and CLI tools in mise | Planned |
 | 5 | Dotfiles | Planned |
 | 6 | Firefox backup and restore | Planned |
 | 7 | SSH backup and restore | Planned |
 | 8 | Other data backups | Planned |
 | 9 | End-to-end test | Planned |
+| 10 | Launchpad folders | Planned |
 
 ### 0. Docs
 
@@ -133,6 +137,31 @@ Each step: discuss, approve, implement, review.
    2. Install method: brew, cask, mas, or manual.
 3. Apps without a cask go into a manual list in the README.
 4. Discuss first: CI check or not (`mas` cannot run in CI).
+5. Groups (task `mise run apps`):
+   1. Core, always: Firefox, KeePassXC, Obsidian, VLC.
+   2. Core, always: Telegram, Discord, Transmission, Scroll Reverser.
+   3. Core, always: Alacritty (GitHub release).
+   4. Dev: Godot, IntelliJ IDEA, Meld.
+   5. Media: GIMP, Audacity.
+   6. Streaming: OBS, Google Chrome, ytmemchat (GitHub release).
+6. Selection:
+   1. `mise run apps` asks y/N per optional group.
+   2. `mise run apps -- dev media` skips the questions.
+7. Casks: mise `brew-cask` with `adopt` and `homebrew_metadata`.
+   1. `adopt` takes over hand-installed apps that match.
+   2. `homebrew_metadata` lets `brew upgrade` update them.
+8. GitHub apps: `mise-tasks/install-github-app`.
+   1. Takes the latest release; skips if the version matches.
+   2. Checks `SHA256SUMS.txt` when the release has one.
+   3. Alacritty cask is disabled (Gatekeeper); its release has no sums.
+9. Manual (README):
+   1. LiveSplit One: Chrome → Install page as app (web app).
+   2. Scroll Reverser: Accessibility permission.
+10. Dropped: Brave, Cursor, Antigravity, IINA, Shotcut, Mp3tag.
+11. Dropped: TIDAL, Jellyfin, Final Cut Pro, Telegram Desktop.
+12. Dropped: LocalSend, balenaEtcher, Pages, Numbers, Shadowrocket.
+13. Dropped: Steam, Battle.net, Whisky, Rulka, FourSouls, socialstream.
+14. CI: no. `bootstrap` in CI sets `BOOTSTRAP_SKIP_APPS=1`.
 
 ### 4. Runtimes and CLI tools
 
@@ -141,6 +170,10 @@ Each step: discuss, approve, implement, review.
    1. What moves from brew to mise.
    2. Adding the shims line to `.zshrc` in `My_linux_settings`.
 3. Discuss first: CI check or not.
+4. Core Go tools via the mise `go:` backend (from step 3):
+   1. `github.com/HardDie/myTldr`.
+   2. `github.com/HardDie/gsplitter`.
+   3. `github.com/HardDie/ghashdeep`.
 
 ### 5. Dotfiles
 
@@ -198,3 +231,13 @@ Each step: discuss, approve, implement, review.
 
 1. Goal: the full flow works on a clean system.
 2. Discuss first: new user account or a VM.
+
+### 10. Launchpad folders
+
+1. Goal: same Launchpad layout on every Mac.
+2. Folders:
+   1. Other, Other2: hide the default macOS apps.
+   2. Tools, Games: group the installed apps.
+3. Works on macOS 15 only; macOS 26 removed Launchpad.
+4. Assumption: the new Mac runs the same macOS version.
+5. Discuss first: how to script the layout; CI check or not.

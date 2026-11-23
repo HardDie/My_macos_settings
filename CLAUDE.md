@@ -40,7 +40,7 @@ Plan and step status: [docs/roadmap.md](docs/roadmap.md).
 2. mise does everything else.
    1. Installs Homebrew (this also brings Xcode CLT and git).
    2. Converts the unpacked folder into a git clone.
-   3. Installs apps via `mise bootstrap` packages (brew, cask, mas).
+   3. Installs apps: Homebrew casks via mise, GitHub releases via a task.
    4. Applies macOS settings via `mise bootstrap` settings.
    5. Runs backup and restore tasks.
 3. mise never runs in the background.

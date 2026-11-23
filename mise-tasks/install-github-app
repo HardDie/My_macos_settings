@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+#MISE description="Install a macOS .app from the latest GitHub release"
+# Usage: mise run install-github-app -- <owner/repo> <asset-regex> <App name>
+# Example: mise run install-github-app -- alacritty/alacritty 'Alacritty-v.*\.dmg' Alacritty
+#
+# Skips when /Applications/<App>.app already has the release version.
+# Verifies the download against SHA256SUMS.txt when the release has one.
+# APP_DIR overrides the target folder (used for tests).
+set -euo pipefail
+
+repo="${1:?owner/repo}"
+pattern="${2:?asset regex}"
+app="${3:?App name}"
+app_dir="${APP_DIR:-/Applications}"
+target="$app_dir/$app.app"
+
+api="https://api.github.com/repos/$repo/releases/latest"
+release="$(curl -fsSL "$api")"
+
+# Pull the tag and the matching asset URLs out of the JSON (python3 ships with macOS CLT).
+read -r tag asset_url sums_url < <(python3 -c '
+import json, re, sys
+d = json.load(sys.stdin)
+pat = re.compile(sys.argv[1])
+assets = {a["name"]: a["browser_download_url"] for a in d["assets"]}
+match = [n for n in assets if pat.fullmatch(n)]
+if len(match) != 1:
+    sys.exit(f"expected 1 asset matching {sys.argv[1]!r}, found {match}")
+print(d["tag_name"], assets[match[0]], assets.get("SHA256SUMS.txt", "-"))
+' "$pattern" <<<"$release")
+
+version="${tag#v}"
+installed="$(defaults read "$target/Contents/Info" CFBundleShortVersionString 2>/dev/null || true)"
+if [[ "$installed" == "$version" ]]; then
+  echo "$app $version already installed."
+  exit 0
+fi
+echo "Installing $app $version (installed: ${installed:-none})"
+
+tmp="$(mktemp -d)"
+trap 'hdiutil detach -quiet "$tmp/mnt" 2>/dev/null || true; rm -rf "$tmp"' EXIT
+file="$tmp/$(basename "$asset_url")"
+curl -fsSL -o "$file" "$asset_url"
+
+if [[ "$sums_url" != "-" ]]; then
+  curl -fsSL -o "$tmp/SHA256SUMS.txt" "$sums_url"
+  (cd "$tmp" && grep " $(basename "$file")\$" SHA256SUMS.txt | shasum -a 256 -c -)
+else
+  echo "No SHA256SUMS.txt in the release; skipping checksum."
+fi
+
+case "$file" in
+  *.dmg)
+    hdiutil attach -quiet -nobrowse -readonly -mountpoint "$tmp/mnt" "$file"
+    src="$tmp/mnt"
+    ;;
+  *.zip)
+    ditto -x -k "$file" "$tmp/unzip"
+    src="$tmp/unzip"
+    ;;
+  *)
+    echo "Unsupported archive: $file" >&2
+    exit 1
+    ;;
+esac
+
+bundle="$(find "$src" -maxdepth 2 -name "*.app" -type d | head -1)"
+if [[ -z "$bundle" ]]; then
+  echo "No .app found in $file" >&2
+  exit 1
+fi
+
+mkdir -p "$app_dir"
+rm -rf "$target"
+ditto "$bundle" "$target"
+echo "Installed $target"
