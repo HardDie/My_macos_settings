@@ -81,4 +81,5 @@ mise.toml         # tools, bootstrap packages and settings, short tasks
 mise-tasks/       # longer file tasks
 docs/roadmap.md   # steps, status, decisions
 README.md         # user guide
+.github/workflows/ci.yml  # CI: step 1 on a macOS runner
 ```

@@ -21,6 +21,8 @@ Each step: discuss, approve, implement, review.
 12. No GPG: `~/.gnupg` does not exist on the source Mac.
 13. Always use the latest mise; no `min_version` pin.
 14. `git-init` uses the HTTPS remote (no SSH keys yet).
+15. CI covers step 1 only; decide CI for each later step.
+16. `install_mise.sh` takes `REF` (branch or SHA), default `main`.
 
 ## Steps
 
@@ -28,6 +30,7 @@ Each step: discuss, approve, implement, review.
 |---|---|---|
 | 0 | Docs: `CLAUDE.md`, this roadmap | Done |
 | 1 | Entry point: `install_mise.sh`, README, `bootstrap` task | Done |
+| 1b | CI on GitHub Actions for step 1 | Done |
 | 2 | macOS settings | Planned |
 | 3 | Applications | Planned |
 | 4 | Runtimes and CLI tools in mise | Planned |
@@ -60,6 +63,22 @@ Each step: discuss, approve, implement, review.
    2. No version pin; always latest.
 6. Tested with a sandboxed `HOME` and a tarball copy.
 
+### 1b. CI
+
+1. Goal: verify step 1 on a GitHub macOS runner.
+2. Workflow: `.github/workflows/ci.yml`, on every push.
+3. Jobs:
+   1. `lint`: shellcheck on Ubuntu.
+   2. `fresh-mac`: `macos-latest`.
+4. `fresh-mac` flow:
+   1. Uninstall Homebrew to simulate a fresh Mac.
+   2. Run the one-liner pinned to the pushed commit.
+   3. Run `mise run bootstrap`.
+   4. Check brew, the git remote and upstream.
+   5. Re-run both; each step must report a skip.
+5. Not covered: Xcode CLT install (preinstalled on runners).
+6. No README badge.
+
 ### 2. macOS settings
 
 1. Goal: settings applied by `[bootstrap.settings.macos]`.
@@ -74,6 +93,7 @@ Each step: discuss, approve, implement, review.
    7. Control Center items shown and hidden.
    8. Custom keyboard shortcuts (`symbolichotkeys`).
 4. Done when: a fresh account matches after bootstrap.
+5. Discuss first: CI check or not.
 
 ### 3. Applications
 
@@ -82,6 +102,7 @@ Each step: discuss, approve, implement, review.
    1. Keep or drop each app.
    2. Install method: brew, cask, mas, or manual.
 3. Apps without a cask go into a manual list in the README.
+4. Discuss first: CI check or not (`mas` cannot run in CI).
 
 ### 4. Runtimes and CLI tools
 
@@ -89,6 +110,7 @@ Each step: discuss, approve, implement, review.
 2. Discuss first:
    1. What moves from brew to mise.
    2. Adding the shims line to `.zshrc` in `My_linux_settings`.
+3. Discuss first: CI check or not.
 
 ### 5. Dotfiles
 
@@ -100,6 +122,7 @@ Each step: discuss, approve, implement, review.
    2. Missing entries get appended to the end of `.zshrc`.
    3. `.zshrc` is a symlink into `My_linux_settings`.
    4. Appending changes that repo; decide where to commit it.
+5. Discuss first: CI check or not.
 
 ### 6. Firefox
 
@@ -110,12 +133,14 @@ Each step: discuss, approve, implement, review.
    1. What to exclude (caches, crash reports, telemetry).
    2. Where the archive is written.
    3. The empty leftover profile `48q00cyt.default`.
+5. Discuss first: CI check or not.
 
 ### 7. SSH
 
 1. Goal: `backup-ssh` and `restore-ssh`.
 2. Restore must set strict permissions (700 dir, 600 keys).
 3. Discuss first: plain archive or passphrase-protected.
+4. Discuss first: CI check or not.
 
 ### 8. Other data backups
 
@@ -137,6 +162,7 @@ Each step: discuss, approve, implement, review.
    3. Keychain: sync via iCloud Keychain instead.
    4. Colima VM: recreate.
 4. Discuss first: which candidates to keep.
+5. Discuss first: CI check or not.
 
 ### 9. End-to-end test
 

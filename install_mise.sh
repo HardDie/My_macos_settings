@@ -2,10 +2,15 @@
 # Entry point for a fresh Mac. Installs mise and fetches this repo.
 # Usage:
 #   curl -fsSL https://raw.githubusercontent.com/HardDie/My_macos_settings/main/install_mise.sh | bash
+# Another branch or commit (used by CI):
+#   curl -fsSL .../install_mise.sh | REF=<branch-or-sha> bash
 set -euo pipefail
 
 REPO="HardDie/My_macos_settings"
-BRANCH="main"
+# Git ref to download: a branch name or a commit SHA.
+# "${REF:-main}" means: take $REF from the environment;
+# if it is unset or empty, fall back to "main".
+REF="${REF:-main}"
 DEST="$PWD/My_macos_settings"
 MISE="$HOME/.local/bin/mise"
 
@@ -29,12 +34,13 @@ fi
 if [[ -d "$DEST" ]]; then
   log "Repo folder exists, skipping download: $DEST"
 else
-  log "Downloading $REPO ($BRANCH) into $DEST"
+  log "Downloading $REPO ($REF) into $DEST"
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' EXIT
-  curl -fsSL "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" \
+  curl -fsSL "https://github.com/$REPO/archive/$REF.tar.gz" \
     | tar -xz -C "$tmp"
-  mv "$tmp/My_macos_settings-$BRANCH" "$DEST"
+  # The unpacked folder name depends on REF; the tarball holds exactly one.
+  mv "$tmp"/*/ "$DEST"
 fi
 
 # 3. Trust the repo config so mise can run its tasks

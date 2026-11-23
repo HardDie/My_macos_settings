@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest  # shellcheck is preinstalled here
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: shellcheck install_mise.sh
+
+  fresh-mac:
+    runs-on: macos-latest
+    env:
+      SCRIPT_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/install_mise.sh
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+    steps:
+      - name: Uninstall Homebrew (simulate a fresh Mac)
+        run: |
+          NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
+          sudo rm -rf /opt/homebrew
+          test ! -e /opt/homebrew/bin/brew
+
+      - name: Run the one-liner (first run)
+        run: curl -fsSL "$SCRIPT_URL" | REF=${{ github.sha }} bash
+
+      - name: Bootstrap (first run)
+        working-directory: ${{ github.workspace }}/My_macos_settings
+        run: ~/.local/bin/mise run bootstrap
+
+      - name: Check results
+        working-directory: ${{ github.workspace }}/My_macos_settings
+        run: |
+          /opt/homebrew/bin/brew --version
+          git remote get-url origin
+          git rev-parse --abbrev-ref --symbolic-full-name @{u}
+          # Tracked files match origin/main only when testing main itself.
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            git diff --exit-code origin/main
+          fi
+
+      - name: Re-run the one-liner (must skip everything)
+        run: |
+          out="$(curl -fsSL "$SCRIPT_URL" | REF=${{ github.sha }} bash 2>&1)"
+          echo "$out"
+          grep -q "mise already installed" <<<"$out"
+          grep -q "Repo folder exists" <<<"$out"
+
+      - name: Re-run bootstrap (must skip everything)
+        working-directory: ${{ github.workspace }}/My_macos_settings
+        run: |
+          out="$(~/.local/bin/mise run bootstrap 2>&1)"
+          echo "$out"
+          grep -q "Homebrew already installed" <<<"$out"
+          grep -q "Already a git repo" <<<"$out"
