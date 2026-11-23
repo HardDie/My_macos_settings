@@ -1,0 +1,39 @@
+# Bootstrap config for this Mac. See README.md and docs/roadmap.md.
+
+[tasks.install-brew]
+description = "Install Homebrew if missing (also installs Xcode CLT)"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  echo "Homebrew already installed: $(/opt/homebrew/bin/brew --version | head -1)"
+  exit 0
+fi
+echo "Installing Homebrew. Your password is needed once."
+sudo -v
+NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+'''
+
+[tasks.git-init]
+description = "Turn the unpacked tarball into a git clone"
+depends = ["install-brew"]
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ -d .git ]]; then
+  echo "Already a git repo, nothing to do."
+  exit 0
+fi
+git init -q -b main
+git remote add origin https://github.com/HardDie/My_macos_settings.git
+git fetch -q origin main
+git reset -q origin/main
+git branch -q --set-upstream-to=origin/main main
+echo "Git clone ready. Local changes, if any:"
+git status --short
+'''
+
+[tasks.bootstrap]
+description = "Set up this Mac (grows with each roadmap step)"
+depends = ["install-brew", "git-init"]
+run = "echo 'Bootstrap done.'"

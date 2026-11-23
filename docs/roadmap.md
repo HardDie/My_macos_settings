@@ -19,13 +19,15 @@ Each step: discuss, approve, implement, review.
 10. Task names: `backup-<thing>` and `restore-<thing>`.
 11. No ADR or use-case folders; decisions live here.
 12. No GPG: `~/.gnupg` does not exist on the source Mac.
+13. Always use the latest mise; no `min_version` pin.
+14. `git-init` uses the HTTPS remote (no SSH keys yet).
 
 ## Steps
 
 | # | Step | Status |
 |---|---|---|
 | 0 | Docs: `CLAUDE.md`, this roadmap | Done |
-| 1 | Entry point: `install_mise.sh`, README, `bootstrap` task | Planned |
+| 1 | Entry point: `install_mise.sh`, README, `bootstrap` task | Done |
 | 2 | macOS settings | Planned |
 | 3 | Applications | Planned |
 | 4 | Runtimes and CLI tools in mise | Planned |
@@ -53,6 +55,10 @@ Each step: discuss, approve, implement, review.
    1. Is `mise bootstrap` experimental in the installed mise?
    2. Pin a mise version or take latest?
 4. Done when: the script runs twice without harm.
+5. Answers:
+   1. `mise bootstrap` needs no experimental flag (to confirm in step 2).
+   2. No version pin; always latest.
+6. Tested with a sandboxed `HOME` and a tarball copy.
 
 ### 2. macOS settings
 
@@ -88,6 +94,12 @@ Each step: discuss, approve, implement, review.
 
 1. Goal: `mise run dotfiles` clones and links.
 2. Discuss first: HTTPS or SSH clone (SSH needs step 7 first).
+3. `makelinks.sh` uses `stow`; install it before linking.
+4. PATH check after linking:
+   1. Need `~/.local/bin` (mise) and `/opt/homebrew/bin`.
+   2. Missing entries get appended to the end of `.zshrc`.
+   3. `.zshrc` is a symlink into `My_linux_settings`.
+   4. Appending changes that repo; decide where to commit it.
 
 ### 6. Firefox
 
