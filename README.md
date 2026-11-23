@@ -22,6 +22,9 @@ Answering `y` runs bootstrap, which:
 
 1. Installs Homebrew. It asks for your password once and also installs the Xcode Command Line Tools (this brings `git`).
 2. Turns `./My_macos_settings` into a git clone, so `git pull` works.
+3. Applies macOS settings (dark mode, Dock, keyboard, input sources and more; see `mise.toml`).
+
+Then log out and back in, so the keyboard layouts (ABC and Russian) and the Caps Lock → fn remap take effect.
 
 ## If you answered "no"
 
@@ -41,8 +44,17 @@ Until your shell config adds `~/.local/bin` to `PATH`, call mise by its full pat
 | `mise run bootstrap` | Runs every setup step below |
 | `mise run install-brew` | Installs Homebrew if missing |
 | `mise run git-init` | Turns the downloaded folder into a git clone |
+| `mise run macos-settings` | Applies macOS settings, reloads the Dock and menu bar |
+
+Check which settings are applied with `mise bootstrap macos defaults status`.
 
 List them any time with `mise tasks`.
+
+## Manual steps
+
+Things that cannot be set from the command line:
+
+1. Home folder in the Finder sidebar: Finder → Settings (⌘,) → Sidebar → under Favorites, tick your user name (house icon).
 
 ## Notes
 

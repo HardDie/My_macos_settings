@@ -43,6 +43,10 @@ jobs:
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             git diff --exit-code origin/main
           fi
+          # Every macOS setting must be applied.
+          status="$(~/.local/bin/mise bootstrap macos defaults status 2>&1)"
+          echo "$status"
+          ! grep -q differs <<<"$status"
 
       - name: Re-run the one-liner (must skip everything)
         run: |
@@ -58,3 +62,5 @@ jobs:
           echo "$out"
           grep -q "Homebrew already installed" <<<"$out"
           grep -q "Already a git repo" <<<"$out"
+          grep -q "already set" <<<"$out"
+          ! grep -q "mise defaults: wrote" <<<"$out"

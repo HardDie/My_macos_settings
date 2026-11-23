@@ -23,6 +23,8 @@ Each step: discuss, approve, implement, review.
 14. `git-init` uses the HTTPS remote (no SSH keys yet).
 15. CI covers step 1 only; decide CI for each later step.
 16. `install_mise.sh` takes `REF` (branch or SHA), default `main`.
+17. `[env] _.path` adds `~/.local/bin` so tasks can call `mise`.
+18. Never run plain `mise bootstrap`; it runs our `bootstrap` task (loop).
 
 ## Steps
 
@@ -31,7 +33,7 @@ Each step: discuss, approve, implement, review.
 | 0 | Docs: `CLAUDE.md`, this roadmap | Done |
 | 1 | Entry point: `install_mise.sh`, README, `bootstrap` task | Done |
 | 1b | CI on GitHub Actions for step 1 | Done |
-| 2 | macOS settings | Planned |
+| 2 | macOS settings | Done |
 | 3 | Applications | Planned |
 | 4 | Runtimes and CLI tools in mise | Planned |
 | 5 | Dotfiles | Planned |
@@ -94,6 +96,34 @@ Each step: discuss, approve, implement, review.
    8. Custom keyboard shortcuts (`symbolichotkeys`).
 4. Done when: a fresh account matches after bootstrap.
 5. Discuss first: CI check or not.
+6. Applied (task `macos-settings`):
+   1. Dark mode.
+   2. 24-hour time.
+   3. Key repeat instead of the accent popup.
+   4. Autocorrect off (apps and web).
+   5. Caps Lock changes input source via the fn remap (item 11).
+   6. Dock autohide; no recent apps.
+   7. Screen recordings show clicks.
+   8. Globe key changes input source.
+   9. Input sources ABC and RussianWin (needs a logout).
+   10. F4 opens Launchpad (shortcut 160).
+   11. Built-in keyboard: Caps Lock → fn, fn/Globe → Control.
+7. Skipped:
+   1. Menu bar clock: values equal macOS defaults.
+   2. Dock icon size: default 48 is fine.
+   3. Finder list view: easy to change by hand.
+   4. Control Center items: macOS writes them itself.
+   5. Language and region: Setup Assistant asks.
+   6. Other keyboard shortcuts: all at defaults.
+   7. Trackpad: all at defaults.
+   8. `TISRomanSwitchState`: no effect while Caps Lock is fn.
+8. Manual (README): home folder in Finder sidebar Favorites.
+   1. Stored in a protected binary file, not in `defaults`.
+9. `mise bootstrap macos defaults` needs no experimental flag.
+10. CI: yes.
+   1. `status` must show no `differs`.
+   2. The re-run must write nothing.
+11. Modifier remaps live in the current-host domain (per Mac).
 
 ### 3. Applications
 

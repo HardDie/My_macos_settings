@@ -53,6 +53,7 @@ cat <<EOF
 Next step: mise run bootstrap
   1. Install Homebrew (asks for your password; brings Xcode CLT and git).
   2. Turn $DEST into a git clone of $REPO.
+  3. Apply macOS settings (Dark mode, Dock, keyboard, input sources).
 
 EOF
 

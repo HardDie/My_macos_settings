@@ -1,5 +1,10 @@
 # Bootstrap config for this Mac. See README.md and docs/roadmap.md.
 
+[env]
+# Tasks call `mise` itself; install_mise.sh puts it in ~/.local/bin,
+# which is not on PATH on a fresh Mac.
+_.path = ["{{env.HOME}}/.local/bin"]
+
 [tasks.install-brew]
 description = "Install Homebrew if missing (also installs Xcode CLT)"
 run = '''
@@ -33,7 +38,82 @@ echo "Git clone ready. Local changes, if any:"
 git status --short
 '''
 
+[tasks.macos-settings]
+description = "Apply macOS settings from [bootstrap.settings.macos]"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+mise bootstrap macos defaults apply --yes
+# mise does not restart apps; reload the Dock and the menu bar.
+killall Dock SystemUIServer 2>/dev/null || true
+# Reload keyboard shortcuts without a logout.
+/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u || true
+echo "Log out and back in to apply input sources (keyboard layouts)."
+'''
+
 [tasks.bootstrap]
 description = "Set up this Mac (grows with each roadmap step)"
-depends = ["install-brew", "git-init"]
+depends = ["install-brew", "git-init", "macos-settings"]
 run = "echo 'Bootstrap done.'"
+
+# --- macOS settings ---------------------------------------------------------
+# Applied by `mise run macos-settings`. Check with:
+#   mise bootstrap macos defaults status
+# Only settings that differ from the macOS defaults live here.
+
+[bootstrap.settings.macos.defaults.NSGlobalDomain]
+# Dark mode.
+AppleInterfaceStyle = "Dark"
+# 24-hour time.
+AppleICUForce24HourTime = true
+# Holding a key repeats it (jjjj) instead of showing the accent popup (è é ê).
+ApplePressAndHoldEnabled = false
+# Autocorrect off in apps.
+NSAutomaticSpellingCorrectionEnabled = false
+# Autocorrect off in web views.
+WebAutomaticSpellingCorrectionEnabled = false
+
+[bootstrap.settings.macos.defaults."com.apple.dock"]
+# Hide the Dock until the pointer reaches the screen edge.
+autohide = true
+# No "recent apps" section in the Dock.
+show-recents = false
+
+[bootstrap.settings.macos.defaults."com.apple.screencapture"]
+# Screen recordings show mouse clicks.
+showsClicks = true
+
+[bootstrap.settings.macos.defaults."com.apple.HIToolbox"]
+# Globe (fn) key changes the input source.
+AppleFnUsageType = 1
+# Keyboard layouts: ABC and Russian (PC). Needs a logout to show up.
+# The last two entries are system input methods macOS always keeps.
+AppleEnabledInputSources = [
+  { InputSourceKind = "Keyboard Layout", "KeyboardLayout ID" = 252, "KeyboardLayout Name" = "ABC" },
+  { InputSourceKind = "Keyboard Layout", "KeyboardLayout ID" = 19458, "KeyboardLayout Name" = "RussianWin" },
+  { "Bundle ID" = "com.apple.CharacterPaletteIM", InputSourceKind = "Non Keyboard Input Method" },
+  { "Bundle ID" = "com.apple.PressAndHold", InputSourceKind = "Non Keyboard Input Method" },
+]
+
+# F4 opens Launchpad (shortcut 160; 118 = F4 key code, 8388608 = fn flag).
+# Off and empty by default in macOS.
+[[bootstrap.settings.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["160"]
+value = { enabled = true, value = { parameters = [65535, 118, 8388608], type = "standard" } }
+
+# Modifier keys of the built-in keyboard (ID 0-0-0). Needs a logout.
+# Stored per Mac ("current host"); external keyboards have their own IDs.
+# Caps Lock acts as fn, so a single press changes the input source
+# (see AppleFnUsageType) and Caps Lock+F4 opens Launchpad.
+# Codes: 0x7000000xx = standard key, 0xFF00000003 / 0xFF0100000003 = fn (Globe).
+[[bootstrap.settings.macos.defaults_entries]]
+host = "current"
+domain = "NSGlobalDomain"
+key = "com.apple.keyboard.modifiermapping.0-0-0"
+value = [
+  { HIDKeyboardModifierMappingSrc = 0xFF00000003, HIDKeyboardModifierMappingDst = 0x7000000E4 },   # fn        -> Right Control
+  { HIDKeyboardModifierMappingSrc = 0xFF0100000003, HIDKeyboardModifierMappingDst = 0x7000000E0 }, # Globe     -> Left Control
+  { HIDKeyboardModifierMappingSrc = 0x700000039, HIDKeyboardModifierMappingDst = 0xFF00000003 },   # Caps Lock -> fn
+]
